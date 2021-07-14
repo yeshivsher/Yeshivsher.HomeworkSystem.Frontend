@@ -115,10 +115,13 @@ export default function ResetPassword() {
 
         if (res?.isAuthenticated) {
             window.alert("איפוס בוצע בהצלחה.")
-            setToken(res.token);
+
             sessionStorage.setItem('isTeacher', JSON.stringify(isTeacher));
             sessionStorage.setItem('username', JSON.stringify(res.data.name + res.data.lastName));
             sessionStorage.setItem('userId', JSON.stringify(res.data.id));
+            sessionStorage.setItem('token', JSON.stringify(res.token));
+      
+            history.replace("/app/home")
         } else {
             window.alert("האיפוס נכשל.")
         }
