@@ -24,6 +24,7 @@ const useStyles = makeStyles({
         maxHeight: 660,
         marginTop: 30,
         flexDirection: 'column',
+        zIndex: 10,
         alignItems: 'center'
     },
     rootTable: {
@@ -32,6 +33,7 @@ const useStyles = makeStyles({
         "&::-webkit-scrollbar": {
             width: "0.3em",
             backgroundColor: "aliceblue",
+            borderRadius: 5
         },
         "&::-webkit-scrollbar-thumb": {
             backgroundColor: "#232c5f",
@@ -67,22 +69,8 @@ const useStyles = makeStyles({
 
 const StudentsTeachersTable = props => {
     const classes = useStyles();
-    const { tableTypeName, listData, classIdToName } = props
+    const { tableTypeName, listData, classIdToName, getClassesNamesList } = props
 
-    const getClassesNamesList = (list) => {
-        let listToString = ''
-        try {
-            let toList = JSON.parse(list)
-
-            toList?.forEach(element => {
-                listToString = listToString + classIdToName[element] + ', '
-            });
-        } catch (e) {
-            console.log("🚀 ~ file: StudentsTeachersTable.js ~ line 82 ~ getClassesNamesList ~ e", e)
-        }
-
-        return listToString
-    }
 
     return (
         <div className={classes.root}>

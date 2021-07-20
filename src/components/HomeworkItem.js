@@ -41,7 +41,7 @@ const useStyles = makeStyles({
 
 const HomeworkItem = props => {
     const classes = useStyles();
-    const { id, isFileExist, setHomeworkIdToFile, homeworkIdToFile, isTeacher, currentHomework } = props
+    const { id, isFileExist, setHomeworkIdToFile, homeworkIdToFile, isTeacher, currentHomework, initAllHomeworks, updateCurrentHomework } = props
 
     const [insertFileWindowOpen, setInsertFileWindowOpen] = useState(false);
     const [fileContent, setFileContent] = useState(null);
@@ -74,7 +74,8 @@ const HomeworkItem = props => {
                 })
                     .then(response => response.json())
                     .then(data => {
-                        setFileContent(data.fileData)
+                        // setFileContent(data.fileData)
+                        initAllHomeworks()
                     })
                     .catch(err => {
                         console.error("TCL: registerLogic -> err", err)
@@ -85,26 +86,60 @@ const HomeworkItem = props => {
             });
     };
 
-    useEffect(() => {
-        console.log("🚀 ~ file: HomeworkItem.js ~ line 106 ~ useEffect ~ useEffect")
+    const updateHomeworkWithoutFile = async homework => {
+        console.log("🚀 ~ file: Homeworks.js ~ line 64 ~ homework", homework)
+        let query = serverConfig.url + '/homework/updateWithoutFile/' + homework.id
+        let homeworkData = new FormData()
 
-    }, [fileContent])
+        homeworkData.append('name', homework.name)
+        homeworkData.append('classId', homework.classId)
+        homeworkData.append('status', homework.status)
+        homeworkData.append('grade', homework.grade)
+        homeworkData.append('studentId', homework.studentId)
+
+        fetch(query, {
+            method: "put",
+            body: homeworkData,
+        })
+            .then(data => {
+                initAllHomeworks()
+            })
+            .catch(e => {
+                console.log("🚀 ~ file: HomeworkItem.js ~ line 73 ~ e", e)
+            });
+
+    };
+
+    // useEffect(() => {
+    //     console.log("🚀 ~ file: HomeworkItem.js ~ line 106 ~ useEffect ~ useEffect")
+
+    // }, [fileContent])
+
+    const getFileData = () => {
+        let query = serverConfig.url + '/homework/getFileByHomeworkId?homeworkId=' + currentHomework.id
+        fetch(query, {
+            method: 'get',
+        })
+            .then(response => response.json())
+            .then(data => {
+                setFileContent(data.fileData)
+            })
+            .catch(err => {
+                console.error("TCL: registerLogic -> err", err)
+            })
+    }
 
     useEffect(() => {
         if (currentHomework.isFileExist) {
-            let query = serverConfig.url + '/homework/getFileByHomeworkId?homeworkId=' + currentHomework.id
-            fetch(query, {
-                method: 'get',
-            })
-                .then(response => response.json())
-                .then(data => {
-                    setFileContent(data.fileData)
-                })
-                .catch(err => {
-                    console.error("TCL: registerLogic -> err", err)
-                })
+            getFileData()
         }
     }, [])
+
+    useEffect(() => {
+        if (currentHomework.isFileExist) {
+            getFileData()
+        }
+    }, [fileContent])
 
     return (
         <div className={classes.root}>
@@ -138,6 +173,7 @@ const HomeworkItem = props => {
                 setHomeworkIdToFile={setHomeworkIdToFile}
                 homeworkIdToFile={homeworkIdToFile}
                 updateHomework={updateHomework}
+                updateCurrentHomework={updateCurrentHomework}
             />
             <DisplayFileWindow open={displayFileWindowOpen} onClose={() => setDisplayFileWindowOpen(false)} content={fileContent} />
             <React.Fragment>
@@ -146,8 +182,37 @@ const HomeworkItem = props => {
                     <Button
                         style={{ marginRight: 10 }}
                         onClick={() => {
-                            window.alert('בדיקה ימומש בהמשך')
-                        }} variant="contained" color="primary">
+                            console.log("🚀 ~ file: HomeworkItem.js ~ line 176 ~ fileContent", fileContent)
+                            if (!fileContent) {
+                                let query = serverConfig.url + '/homework/getFileByHomeworkId?homeworkId=' + currentHomework.id
+                                fetch(query, {
+                                    method: 'get',
+                                })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        setFileContent(data.fileData)
+                                        if (data.fileData?.length < 100) {
+                                            window.alert('ציונך הוא: 100')
+                                            updateHomeworkWithoutFile({ ...currentHomework, grade: 100 })
+                                        } else {
+                                            window.alert('הבדיקה נכשלה.\nציונך הוא: 0.')
+                                            updateHomeworkWithoutFile({ ...currentHomework, grade: 0 })
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.error("TCL: registerLogic -> err", err)
+                                    })
+                            } else {
+                                if (fileContent?.length < 100) {
+                                    window.alert('ציונך הוא: 100')
+                                    updateHomeworkWithoutFile({ ...currentHomework, grade: 100 })
+                                } else {
+                                    window.alert('הבדיקה נכשלה.\nציונך הוא: 0.')
+                                    updateHomeworkWithoutFile({ ...currentHomework, grade: 0 })
+                                }
+                            }
+                        }}
+                        variant="contained" color="primary">
 
                         בדוק
                     </Button>

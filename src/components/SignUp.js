@@ -153,10 +153,13 @@ export default function SignUp() {
       mail: signupObject.mail
     }, isTeacher ? 'teacher' : 'student');
 
+    console.log("🚀 ~ file: SignUp.js ~ line 157 ~ SignUp ~ res", res)
     if (res.success) {
+      let userObject = JSON.parse(res.data)
       sessionStorage.setItem('isTeacher', JSON.stringify(isTeacher));
-      sessionStorage.setItem('username', JSON.stringify(res.data.name + res.data.lastName));
-      sessionStorage.setItem('userId', JSON.stringify(res.data.id));
+      sessionStorage.setItem('username', JSON.stringify(userObject.name + ' ' + userObject.lastName));
+      sessionStorage.setItem('userId', JSON.stringify(userObject.id));
+      sessionStorage.setItem('classIds', JSON.stringify(userObject.classIds));
       sessionStorage.setItem('token', JSON.stringify(res.token));
 
       history.replace("/app/home")

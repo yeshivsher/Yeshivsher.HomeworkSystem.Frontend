@@ -79,13 +79,14 @@ export default function SignIn() {
 
         const res = await loginUser({
             email,
-            password 
+            password
         }, isTeacher ? 'teacher' : 'student');
 
         if (res?.isAuthenticated) {
             sessionStorage.setItem('isTeacher', JSON.stringify(isTeacher));
-            sessionStorage.setItem('username', JSON.stringify(res.data.name + res.data.lastName));
+            sessionStorage.setItem('username', JSON.stringify(res.data.name + ' ' + res.data.lastName));
             sessionStorage.setItem('userId', JSON.stringify(res.data.id));
+            sessionStorage.setItem('classIds', JSON.stringify(res.data.classIds));
             sessionStorage.setItem('token', JSON.stringify(res.token));
 
             history.replace("/app/home")

@@ -117,8 +117,9 @@ export default function ResetPassword() {
             window.alert("איפוס בוצע בהצלחה.")
 
             sessionStorage.setItem('isTeacher', JSON.stringify(isTeacher));
-            sessionStorage.setItem('username', JSON.stringify(res.data.name + res.data.lastName));
+            sessionStorage.setItem('username', JSON.stringify(res.data.name + ' ' + res.data.lastName));
             sessionStorage.setItem('userId', JSON.stringify(res.data.id));
+            sessionStorage.setItem('classIds', JSON.stringify(res.data.classIds));
             sessionStorage.setItem('token', JSON.stringify(res.token));
       
             history.replace("/app/home")

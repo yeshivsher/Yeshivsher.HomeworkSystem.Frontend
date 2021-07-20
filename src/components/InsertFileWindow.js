@@ -18,7 +18,7 @@ const useStyles = makeStyles({
 
 const InsertFileWindow = (props) => {
     const classes = useStyles();
-    const { onClose, open, id, currentHomework, setHomeworkIdToFile, homeworkIdToFile, updateHomework } = props;
+    const { onClose, open, id, currentHomework, setHomeworkIdToFile, homeworkIdToFile, updateHomework, updateCurrentHomework } = props;
 
     const [isFileReadyForSend, setIsFileReadyForSend] = useState(false);
     const [isFileExist, setIsFileExist] = useState(false);
@@ -32,13 +32,13 @@ const InsertFileWindow = (props) => {
                 var file = document.querySelector('input[type=file]').files[0];
                 var textFile = /text.*/;
                 var reader = new FileReader()
+                let tempCurrentHomework = { ...currentHomework }
 
                 // set data
-                let tempHomeworkIdToFile = { ...homeworkIdToFile }
+                tempCurrentHomework.fileData = file
+                tempCurrentHomework.isFileExist = true
 
-                tempHomeworkIdToFile[id] = file
-
-                setHomeworkIdToFile(tempHomeworkIdToFile)
+                updateCurrentHomework(tempCurrentHomework)
                 setIsFileReadyForSend(true)
 
                 if (file != null) {
@@ -84,7 +84,8 @@ const InsertFileWindow = (props) => {
             let homeworkToUpdate = {
                 ...currentHomework,
                 fileData: fileForUpload,
-                isFileExist: true
+                isFileExist: true,
+                status: "הוגש"
             }
 
             updateHomework(homeworkToUpdate);
@@ -95,13 +96,15 @@ const InsertFileWindow = (props) => {
 
     useEffect(() => {
 
-        if (currentHomework.isFileExist == 1) {
+        console.log("🚀 ~ file: InsertFileWindow.js ~ line 100 ~ useEffect ~ currentHomework", currentHomework.id)
+        if (currentHomework.isFileExist) {
             let query = serverConfig.url + '/homework/getFileByHomeworkId?homeworkId=' + currentHomework.id
             fetch(query, {
                 method: 'get',
             })
                 .then(response => response.json())
                 .then(data => {
+                    // console.log("🚀 ~ file: InsertFileWindow.js ~ line 107 ~ useEffect ~ data", data)
                     setFileContent(data.fileData)
                 })
                 .catch(err => {

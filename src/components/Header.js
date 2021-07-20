@@ -49,9 +49,6 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: 5,
   },
   leftHeader: {
-    [theme.breakpoints.down("sm")]: {
-      display: 'none'
-    },
     marginLeft: -13,
     marginTop: 15,
     width: HEADER_ELEMENTS_WIDTH,
@@ -77,7 +74,6 @@ export default function Header(props) {
         <div className={classes.logoContainer}>
           <img src={Logo} alt="logo" className={classes.logo} />
         </div>
-        {/* <div className={classes.toolbarTitleContainer}> */}
         <Typography
           component="h2"
           variant="h5"
@@ -88,7 +84,6 @@ export default function Header(props) {
         >
           {title}
         </Typography>
-        {/* </div> */}
         <div className={classes.leftHeader}>
           <Typography
             component="h2"

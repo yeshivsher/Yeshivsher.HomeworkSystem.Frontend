@@ -7,17 +7,30 @@ import StudentsTeachersTable from "./StudentsTeachersTable"
 import Homeworks from "./Homeworks"
 import { serverConfig } from '../config';
 import Sidebar from './Sidebar';
+import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
+import mainImage from '../images/main.jpg';
+import mainTeacher from '../images/mainTeacher.jpg';
 
 const TEACHER = 'teacher'
 const STUDENT = 'student'
 
-const TEACHER_BUTTONS_CONTROLLER = [1, 2, 3, 4]
-const STUDENT_BUTTONS_CONTROLLER = [2, 3, 4]
+const TEACHER_BUTTONS_CONTROLLER = [2, 3, 0]
+const STUDENT_BUTTONS_CONTROLLER = [3, 0]
 
 const useStyles = makeStyles((theme) => ({
 	body: {
 		display: 'flex',
-		flexDirection: 'row-reverse'
+		flexDirection: 'row-reverse',
+		zIndex: 2
+	},
+	toolbarTitle: {
+		marginTop: 20,
+		flex: 1,
+		fontWeight: 'bold',
+		fontSize: 40,
+		zIndex: 2,
+		fontFamily: 'system-ui',
 	},
 }));
 
@@ -29,11 +42,29 @@ export default function Home() {
 	const [tableType, setTableType] = useState(TEACHER);
 	const [listData, setListData] = useState([]);
 	const [classIdToName, setClassIdToName] = useState([]);
-	const [isTeacher, setIsTeacher] = useState([]);
-	const [userId, setUserId] = useState([]);
+	const [studentIdToName, setStudentIdToName] = useState([]);
+	const [isTeacher, setIsTeacher] = useState(null);
+	const [userId, setUserId] = useState('');
+	const [username, setUsername] = useState('');
+	const [classIds, setClassIds] = useState([]);
 
-	const [sidebarController, setSidebarController] = useState(1);
+	const [sidebarController, setSidebarController] = useState(0);
 	const [sidebarButtonsController, setSidebarButtonsController] = useState([]);
+
+	const getClassesNamesList = (list) => {
+		let listToString = ''
+		try {
+			let toList = JSON.parse(list)
+
+			toList?.forEach(element => {
+				listToString = listToString + classIdToName[element] + ', '
+			});
+		} catch (e) {
+			console.log("🚀 ~ file: StudentsTeachersTable.js ~ line 82 ~ getClassesNamesList ~ e", e)
+		}
+
+		return listToString.substr(0, listToString.length - 2)
+	}
 
 	const setTableTypeOverated = (tableType) => {
 		if (tableType == TEACHER) {
@@ -45,22 +76,37 @@ export default function Home() {
 		}
 	}
 
+	const getStudentsListByClassId = (classId) => {
+		return studentsList.filter(s => {
+			let list = JSON.parse(s.classIds)
+			return !!list.includes(classId)
+		})
+	}
+
 	useEffect(function () {
 		console.log('useEffect')
 
 		// init user profil
 		let isTeacher = sessionStorage.getItem('isTeacher');
 		let userId = sessionStorage.getItem('userId');
-		console.log("🚀 ~ file: Home.js ~ line 54 ~ userId", userId)
+		let username = sessionStorage.getItem('username');
+		let classIds = sessionStorage.getItem('classIds');
 
 		setIsTeacher(isTeacher === 'true')
 		setUserId(userId)
+
+		let objJsonClassIds = JSON.parse(classIds)
+		objJsonClassIds = JSON.parse(objJsonClassIds)
+
+		setClassIds(objJsonClassIds)
+		setUsername(username.substr(1, username.length - 2))
 
 		let tempTableType = isTeacher == 'true' ? TEACHER : STUDENT;
 		let tempSidebarButtonsController = isTeacher == 'true' ? TEACHER_BUTTONS_CONTROLLER : STUDENT_BUTTONS_CONTROLLER;
 
 		setTableType(tempTableType)
 		setSidebarButtonsController(tempSidebarButtonsController)
+		console.log("🚀 ~ file: Home.js ~ line 109 ~ objJsonClassIds", objJsonClassIds)
 
 		// get all data
 		let queryS = serverConfig.url + '/student'
@@ -69,15 +115,24 @@ export default function Home() {
 		})
 			.then(response => response.json())
 			.then(data => {
-				console.log("🚀 ~ file: Home.js ~ line 72 ~ data", data)
 				let tempStudentsList = []
+				let tempStudentIdToName = {}
 
 				data.students.forEach(element => {
-					tempStudentsList.push(element)
+					let classIdsOfStudent = JSON.parse(element.classIds)
+
+					for (let i in classIdsOfStudent) {
+						if (objJsonClassIds.includes(classIdsOfStudent[i])) {
+							tempStudentsList.push(element)
+							tempStudentIdToName[element.id] = element.name + ' ' + element.lastName
+							break
+						}
+					}
 				});
 
 				setStudentsList(tempStudentsList)
 				setListData(tempStudentsList)
+				setStudentIdToName(tempStudentIdToName)
 			})
 			.catch(err => {
 				console.error("TCL: registerLogic -> err", err)
@@ -135,21 +190,80 @@ export default function Home() {
 	return (
 		<React.Fragment>
 			<MuiThemeProvider theme={theme}>
+				<img alt="main" src={isTeacher ? mainTeacher : mainImage} style={{ position: 'absolute', width: '100%', opacity: 0.3, marginTop: -20, marginRight: -20 }} />
 				<CssBaseline />
 				<Header title="מערכת בדיקות" />
 				<div className={classes.body}>
 					<Sidebar setSidebarController={setSidebarController} setTableType={setTableTypeOverated} sidebarButtonsController={sidebarButtonsController} />
 					{
 						sidebarController == 0 &&
-						<p>אין מה להציג</p>
+						<div className={classes.toolbarTitle} style={{ display: 'flex', flexDirection: 'column' }} >
+							<br />
+							<Typography
+								component="h2"
+								variant="h5"
+								color="inherit"
+								align="center"
+								noWrap
+								className={classes.toolbarTitle}
+							>
+								ברוך הבא  -  {username}!
+							</Typography>
+							<br />
+							<br />
+							<Divider style={{ width: '80%', alignSelf: 'center', height: 4, borderRadius: 5 }} />
+							<Typography
+								component="h2"
+								variant="h5"
+								color="inherit"
+								align="center"
+								noWrap
+								className={classes.toolbarTitle}
+								style={{ whiteSpace: 'pre-line', fontSize: 30, color: '#56585a' }}
+							>
+								{
+									isTeacher ?
+										"הנך מורה בקורס:"
+										:
+										"הנך תלמיד בקורסים:"
+								}
+							</Typography>
+							<React.Fragment>
+								{
+									classIds.length > 0 &&
+									classIds.map((c, index) => {
+										return <Typography
+											key={`${c}-${index}`}
+											component="h2"
+											variant="h5"
+											align="center"
+											noWrap
+											className={classes.toolbarTitle}
+											style={{ whiteSpace: 'pre-line', fontSize: 24, width: 400, alignSelf: 'center', color: '#353535' }}
+										>
+											{classIdToName[c]}
+										</Typography>
+									})
+								}
+							</React.Fragment>
+							<br />
+							<br />
+						</div>
 					}
 					{
 						(sidebarController == 1 || sidebarController == 2) && listData &&
-						<StudentsTeachersTable tableTypeName={tableTypeName} listData={listData} classIdToName={classIdToName} />
+						<StudentsTeachersTable tableTypeName={tableTypeName} listData={listData} classIdToName={classIdToName} getClassesNamesList={getClassesNamesList} />
 					}
 					{
 						sidebarController == 3 && listData &&
-						<Homeworks classIdToName={classIdToName} isTeacher={isTeacher} userId={userId} />
+						<Homeworks
+							classIdToName={classIdToName}
+							isTeacher={isTeacher}
+							userId={userId}
+							classIds={classIds}
+							getStudentsListByClassId={getStudentsListByClassId}
+							studentIdToName={studentIdToName}
+						/>
 					}
 				</div>
 			</MuiThemeProvider>

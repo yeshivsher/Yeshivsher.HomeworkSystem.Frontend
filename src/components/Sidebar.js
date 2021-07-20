@@ -40,6 +40,12 @@ export default function Sidebar(props) {
     return (
         <div className={classes.root}>
             {
+                sidebarButtonsController.includes(0) &&
+                <Button onClick={() => studentsOrTeachers_handleClick(0)} variant="contained" color="primary">
+                    ראשי
+                </Button>
+            }
+            {
                 sidebarButtonsController.includes(1) &&
                 <Button onClick={() => studentsOrTeachers_handleClick(1)} variant="contained" color="primary">
                     מורים
@@ -57,12 +63,6 @@ export default function Sidebar(props) {
                     מטלות
                 </Button>
             }
-            {/* {
-                sidebarButtonsController.includes(4) &&
-                <Button variant="contained" color="primary" href="#contained-buttons">
-                    Link
-                </Button>
-            } */}
         </div>
     );
 }

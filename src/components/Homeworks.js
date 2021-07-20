@@ -14,6 +14,7 @@ import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import EditIcon from '@material-ui/icons/Edit';
+import AddIcon from '@material-ui/icons/Add';
 
 import { getBase64 } from './general/helperFunctions';
 import { serverConfig } from '../config';
@@ -31,7 +32,8 @@ const useStyles = makeStyles({
         maxHeight: 660,
         marginTop: 30,
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        zIndex: 10
     },
     rootTable: {
         width: '97%',
@@ -39,6 +41,7 @@ const useStyles = makeStyles({
         "&::-webkit-scrollbar": {
             width: "0.3em",
             backgroundColor: "aliceblue",
+            borderRadius: 5
         },
         "&::-webkit-scrollbar-thumb": {
             backgroundColor: "#232c5f",
@@ -62,17 +65,23 @@ const useStyles = makeStyles({
     rowItem: {
         fontWeight: 'bold',
     },
+    addNewHomeworkButton: {
+        position: 'absolute',
+        bottom: 60,
+        right: 60,
+    },
 });
 
 const Homeworks = props => {
     const classes = useStyles();
-    const { classIdToName, isTeacher, userId } = props
+    const { classIdToName, isTeacher, userId, classIds, getStudentsListByClassId, studentIdToName } = props
     const [listData, setListData] = useState([]);
     const [homeworkIdToFile, setHomeworkIdToFile] = useState({});
     const [homeworkIdToFileUpload, setHomeworkIdToFileUpload] = useState({});
     const [loaded, setLoaded] = useState(false)
     const [updateHomeworkWindowOpen, setUpdateHomeworkWindowOpen] = useState(false);
     const [currentRow, setCurrentRow] = useState(false);
+    const [isAddNewHomework, setIsAddNewHomework] = useState(false);
 
     const updateHomeworkWithoutFile = async homework => {
         console.log("🚀 ~ file: Homeworks.js ~ line 64 ~ homework", homework)
@@ -99,6 +108,53 @@ const Homeworks = props => {
             });
 
     };
+
+
+    const addNewHomework = async (newHomework) => {
+        console.log("🚀 ~ file: Homeworks.js ~ line 64 ~ homework", newHomework)
+        let query = serverConfig.url + '/homework'
+        let studentList = getStudentsListByClassId(newHomework.classId)
+
+        studentList.forEach(s => {
+            console.log("🚀 ~ file: Homeworks.js ~ line 118 ~ addNewHomework ~ s", s)
+            let homeworkData = new FormData()
+
+            homeworkData.append('name', newHomework.name)
+            homeworkData.append('classId', newHomework.classId)
+            homeworkData.append('studentId', s.id)
+            homeworkData.append('date', newHomework.date)
+
+            fetch(query, {
+                method: "post",
+                body: homeworkData,
+            })
+                .then(data => {
+                    console.log("🚀 ~ file: Homeworks.js ~ line 129 ~ addNewHomework ~ data", data)
+                })
+                .catch(e => {
+                    console.log("🚀 ~ file: HomeworkItem.js ~ line 73 ~ e", e)
+                });
+        });
+
+        initAllHomeworks()
+        setUpdateHomeworkWindowOpen(false)
+    };
+
+    const updateCurrentHomework = async (newHomework) => {
+        let tempHomeworkList = [...listData]
+        let tempHomeworkIdToFile = { ...homeworkIdToFile }
+        let currentId = newHomework.id
+
+        for (let i in tempHomeworkList) {
+            if (tempHomeworkList[i].id === currentId) {
+                tempHomeworkList[i] = newHomework
+                tempHomeworkIdToFile[currentId] = newHomework.fileData
+            }
+        }
+
+        setHomeworkIdToFile(tempHomeworkIdToFile)
+        setListData(tempHomeworkList)
+    }
 
     const initAllHomeworks = () => {
         let queryT = isTeacher ? serverConfig.url + '/homework'
@@ -153,6 +209,7 @@ const Homeworks = props => {
                     <Table className={classes.table} aria-label="simple table">
                         <TableHead>
                             <TableRow>
+                                <TableCell className={classes.rowTitle} align="right">שם סטודנט</TableCell>
                                 <TableCell className={classes.rowTitle}>שם מטלה</TableCell>
                                 <TableCell className={classes.rowTitle} align="right">ציון</TableCell>
                                 <TableCell className={classes.rowTitle} align="right">תאריך</TableCell>
@@ -162,59 +219,66 @@ const Homeworks = props => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {listData.map((row, index) => (
-                                <TableRow key={index + 'listdata-item'}>
-                                    <TableCell className={classes.rowItem} component="th" scope="row">
-                                        {row.name}
-                                    </TableCell>
-                                    <TableCell className={classes.rowItem} style={{ width: 50 }}>
-                                        <div style={{ alignItems: 'center', display: 'flex', paddingRight: 30 }}>
-                                            <Fab
-                                                color="primary"
-                                                aria-label="edit"
-                                                onClick={() => {
-                                                    setUpdateHomeworkWindowOpen(true)
-                                                    setCurrentRow(row)
-                                                }}
-                                                style={{ marginRight: 20, height: 20, width: 30, display: isTeacher ? '' : 'none' }}
-                                            >
-                                                <EditIcon />
-                                            </Fab>
-                                            <Typography
-                                                component="h2"
-                                                color="inherit"
-                                                align="center"
-                                                noWrap
-                                                style={{
-                                                    fontSize: 14,
-                                                    fontWeight: 'bold',
-                                                    marginRight: 20,
-                                                    color: row.grade == null ? 'gray' : row.grade > 59 ? 'green' : 'red'
-                                                }}
-                                            >
-                                                {row.grade == null ? 'אין ציון' : row.grade}
-                                            </Typography>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className={classes.rowItem} align="right" style={{ width: 200 }}>
-                                        {new Date(row.date).getFullYear() + '/' + (new Date(row.date).getMonth() + 1) + '/' + new Date(row.date).getDate()
-                                            + ' - ' + new Date(row.date).getHours() + ':' + new Date(row.date).getMinutes()}
-                                    </TableCell>
-                                    <TableCell className={classes.rowItem} align="right">{classIdToName[row.classId]}</TableCell>
-                                    <TableCell className={classes.rowItem} align="right">{row.status}</TableCell>
-                                    <TableCell className={classes.rowItem} align="right" style={{ width: 220 }}>
-                                        <HomeworkItem
-                                            id={row.id}
-                                            isFileExist={homeworkIdToFile[row.id] != null}
-                                            setHomeworkIdToFile={setHomeworkIdToFile}
-                                            homeworkIdToFile={homeworkIdToFile}
-                                            setHomeworkIdToFileUpload={setHomeworkIdToFileUpload}
-                                            isTeacher={isTeacher}
-                                            currentHomework={row}
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {
+                                listData
+                                    .filter(row => classIds.includes(row.classId))
+                                    .map((row, index) => (
+                                        <TableRow key={index + 'listdata-item'}>
+                                            <TableCell className={classes.rowItem} align="right">{studentIdToName[row.studentId]}</TableCell>
+                                            <TableCell className={classes.rowItem} component="th" scope="row">
+                                                {row.name}
+                                            </TableCell>
+                                            <TableCell className={classes.rowItem} style={{ width: 50 }}>
+                                                <div style={{ alignItems: 'center', display: 'flex', paddingRight: 30 }}>
+                                                    <Fab
+                                                        color="primary"
+                                                        aria-label="edit"
+                                                        onClick={() => {
+                                                            setUpdateHomeworkWindowOpen(true)
+                                                            setCurrentRow(row)
+                                                            setIsAddNewHomework(false)
+                                                        }}
+                                                        style={{ marginRight: 20, height: 20, width: 30, display: isTeacher ? '' : 'none' }}
+                                                    >
+                                                        <EditIcon />
+                                                    </Fab>
+                                                    <Typography
+                                                        component="h2"
+                                                        color="inherit"
+                                                        align="center"
+                                                        noWrap
+                                                        style={{
+                                                            fontSize: 14,
+                                                            fontWeight: 'bold',
+                                                            marginRight: 20,
+                                                            color: row.grade == null ? 'gray' : row.grade > 59 ? 'green' : 'red'
+                                                        }}
+                                                    >
+                                                        {row.grade == null ? 'אין ציון' : row.grade}
+                                                    </Typography>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className={classes.rowItem} align="right" style={{ width: 200 }}>
+                                                {new Date(row.date).getFullYear() + '/' + (new Date(row.date).getMonth() + 1) + '/' + new Date(row.date).getDate()
+                                                    + ' - ' + new Date(row.date).getHours() + ':' + new Date(row.date).getMinutes()}
+                                            </TableCell>
+                                            <TableCell className={classes.rowItem} align="right">{classIdToName[row.classId]}</TableCell>
+                                            <TableCell className={classes.rowItem} align="right">{row.status}</TableCell>
+                                            <TableCell className={classes.rowItem} align="right" style={{ width: 220 }}>
+                                                <HomeworkItem
+                                                    id={row.id}
+                                                    isFileExist={homeworkIdToFile[row.id] != null}
+                                                    setHomeworkIdToFile={setHomeworkIdToFile}
+                                                    homeworkIdToFile={homeworkIdToFile}
+                                                    setHomeworkIdToFileUpload={setHomeworkIdToFileUpload}
+                                                    isTeacher={isTeacher}
+                                                    currentHomework={row}
+                                                    initAllHomeworks={initAllHomeworks}
+                                                    updateCurrentHomework={updateCurrentHomework}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -242,7 +306,25 @@ const Homeworks = props => {
 
                 currentHomework={currentRow}
                 updateHomework={updateHomeworkWithoutFile}
+                addNewHomework={addNewHomework}
+                isAddNewHomework={isAddNewHomework}
+                classIdToName={classIdToName}
+                classIds={classIds}
             />
+            {
+                isTeacher &&
+                <Fab
+                    color="primary"
+                    aria-label="edit"
+                    onClick={() => {
+                        setUpdateHomeworkWindowOpen(true)
+                        setIsAddNewHomework(true)
+                    }}
+                    className={classes.addNewHomeworkButton}
+                >
+                    <AddIcon />
+                </Fab>
+            }
         </div>
     );
 }
