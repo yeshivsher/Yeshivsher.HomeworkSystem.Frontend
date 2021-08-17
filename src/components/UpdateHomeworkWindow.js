@@ -14,6 +14,7 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import InputBase from '@material-ui/core/InputBase';
+import InsertFileWindow from './InsertFileWindow';
 
 const useStyles = makeStyles({
     body: {
@@ -33,32 +34,57 @@ const useStyles = makeStyles({
         marginLeft: 20,
         marginRight: 20,
     },
+    loadedFileIndicator: {
+        borderRadius: '50%',
+        width: 15,
+        height: 15,
+        backgroundColor: 'gray',
+        alignSelf: 'center'
+    }
 });
+
+const ARGS_TYPE_LIST = ["INT", "FLOAT", "STRING"]
 
 const UpdateHomeworkWindow = (props) => {
     const classes = useStyles();
-    const { onClose, open, currentHomework, updateHomework, isAddNewHomework, addNewHomework, classIdToName, classIds } = props;
+    const { onClose, stayOpened, open, currentHomework, updateHomework, isAddNewHomework, addNewHomework, classIdToName, classIds, updateCurrentHomework } = props;
     const [grade, setGrade] = useState(updateHomework.grade);
 
     const [name, setName] = useState('');
     const [classId, setClassId] = useState('');
     const [time, setTime] = useState('');
+    const [argsType, setArgsType] = useState('');
+
+    const [isExamQuestionLoaded, setIsExamQuestionLoaded] = useState(false);
+    const [isExamSolutionLoaded, setIsExamSolutionLoaded] = useState(false);
+
+    const [examQuestionData, setExamQuestionData] = useState(null);
+    const [examSolutionData, setExamSolutionData] = useState(null);
+
+    const [insertExamQuestionWindowOpen, setInsertExamQuestionWindowOpen] = useState(false);
+    const [insertExamSolutionWindowOpen, setInsertExamSolutionWindowOpen] = useState(false);
 
     const handleClose = () => {
+        setIsExamQuestionLoaded(false)
+        setIsExamSolutionLoaded(false)
         onClose();
     };
 
     const submitFile = () => {
         let homeworkToUpdate = {}
 
+        setIsExamQuestionLoaded(false)
+        setIsExamSolutionLoaded(false)
+
         if (isAddNewHomework) {
             homeworkToUpdate = {
                 ...currentHomework,
                 name,
                 classId,
-                date: time
+                date: time,
+                argsType
             }
-            addNewHomework(homeworkToUpdate)
+            addNewHomework(homeworkToUpdate, examQuestionData, examSolutionData)
         } else {
             homeworkToUpdate = {
                 ...currentHomework,
@@ -75,10 +101,10 @@ const UpdateHomeworkWindow = (props) => {
         <Dialog onClose={handleClose} aria-labelledby="dialog-title" open={open} style={{ maxHeight: 800, overflow: 'hidden' }}>
             <DialogTitle id="dialog-title">
                 {
-                                        !isAddNewHomework ?
-                                        "עדכון ציון:"
-                                        :
-                                        "יצירת מטלה:"
+                    !isAddNewHomework ?
+                        "עדכון ציון:"
+                        :
+                        "יצירת מטלה:"
                 }
             </DialogTitle>
             <Divider />
@@ -125,13 +151,30 @@ const UpdateHomeworkWindow = (props) => {
                                     value={classId}
                                     onChange={e => {
                                         setClassId(e.target.value)
-                                        console.log("🚀 ~ file: UpdateHomeworkWindow.js ~ line 114 ~ UpdateHomeworkWindow ~ e.target.value", e.target.value)
                                     }}
                                 >
                                     {
                                         classIds.length > 0 &&
                                         classIds.map((c, index) => {
                                             return <MenuItem key={`${c}-${index}`} value={c}>{classIdToName[c]}</MenuItem>
+                                        })
+                                    }
+                                </Select>
+                            </FormControl>
+                            <br />
+                            <FormControl >
+                                <InputLabel id="argsType-select-label">סוג הקלט</InputLabel>
+                                <Select
+                                    labelId="argsType-select-label"
+                                    id="argsType-select"
+                                    value={argsType}
+                                    onChange={e => {
+                                        setArgsType(e.target.value)
+                                    }}
+                                >
+                                    {
+                                        ARGS_TYPE_LIST.map((a, index) => {
+                                            return <MenuItem key={`${a}-${index}`} value={a}>{a}</MenuItem>
                                         })
                                     }
                                 </Select>
@@ -162,11 +205,24 @@ const UpdateHomeworkWindow = (props) => {
                                         }}
                                         onChange={(e) => {
                                             setTime(new Date(e.target.value).toISOString().slice(0, 19).replace('T', ' '))
-                                            console.log("🚀 ~ file: UpdateHomeworkWindow.js ~ line 163 ~ UpdateHomeworkWindow ~ new Date(e.target.value).toISOString().slice(0, 19).replace('T', ' ')", new Date(e.target.value).toISOString().slice(0, 19).replace('T', ' '))
-                                            console.log("🚀 ~ file: UpdateHomeworkWindow.js ~ line 163 ~ UpdateHomeworkWindow ~ e.target.value", e.target.value)
                                         }}
                                     />
                                 </form>
+                            </div>
+                            <br />
+                            <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+                                <Button onClick={() => {
+                                    setInsertExamQuestionWindowOpen(true)
+                                }} variant="contained" color="primary">
+                                    קובץ תרגיל
+                                </Button>
+                                <div className={classes.loadedFileIndicator} style={{ backgroundColor: isExamQuestionLoaded ? 'green' : 'gray' }} ></div>
+                                <Button onClick={() => {
+                                    setInsertExamSolutionWindowOpen(true)
+                                }} variant="contained" color="primary">
+                                    קובץ פתרון
+                                </Button>
+                                <div className={classes.loadedFileIndicator} style={{ backgroundColor: isExamSolutionLoaded ? 'green' : 'gray' }}></div>
                             </div>
                             <br />
                         </React.Fragment>
@@ -175,8 +231,36 @@ const UpdateHomeworkWindow = (props) => {
                     variant="contained" color="primary"
                     onClick={() => submitFile()}
                     style={{ fontWeight: 'bold', marginTop: 20 }}
-                >עדכן</Button>
+                >צור</Button>
             </div>
+            <InsertFileWindow
+                open={insertExamQuestionWindowOpen}
+                onClose={() => setInsertExamQuestionWindowOpen(false)}
+                id='exam-question'
+
+                currentHomework={currentHomework}
+                updateHomework={updateHomework}
+                updateCurrentHomework={updateCurrentHomework}
+                isExamQuestion={true}
+                isExamSolution={false}
+                addNewHomework={addNewHomework}
+                callback={() => setIsExamQuestionLoaded(true)}
+                setData={(data) => setExamQuestionData(data)}
+            />
+            <InsertFileWindow
+                open={insertExamSolutionWindowOpen}
+                onClose={() => setInsertExamSolutionWindowOpen(false)}
+                id='exam-solution'
+
+                currentHomework={currentHomework}
+                updateHomework={updateHomework}
+                updateCurrentHomework={updateCurrentHomework}
+                isExamQuestion={false}
+                isExamSolution={true}
+                addNewHomework={addNewHomework}
+                callback={() => setIsExamSolutionLoaded(true)}
+                setData={(data) => setExamSolutionData(data)}
+            />
         </Dialog>
     );
 }

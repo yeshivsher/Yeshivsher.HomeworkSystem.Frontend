@@ -15,8 +15,8 @@ import Container from '@material-ui/core/Container';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
 import { useHistory } from "react-router-dom"
 import Logo from '../images/logo.jpeg'
 

@@ -26,7 +26,6 @@ const useStyles = makeStyles((theme) => ({
 	},
 	toolbarTitle: {
 		marginTop: 20,
-		flex: 1,
 		fontWeight: 'bold',
 		fontSize: 40,
 		zIndex: 2,
@@ -190,14 +189,14 @@ export default function Home() {
 	return (
 		<React.Fragment>
 			<MuiThemeProvider theme={theme}>
-				<img alt="main" src={isTeacher ? mainTeacher : mainImage} style={{ position: 'absolute', width: '100%', opacity: 0.3, marginTop: -20, marginRight: -20 }} />
+				<img alt="main" src={isTeacher ? mainTeacher : mainImage} style={{ position: 'absolute', width: '100%', opacity: 0.3, marginTop: -20, marginRight: -20, objectFit: 'fill', height: '101vw' }} />
 				<CssBaseline />
 				<Header title="מערכת בדיקות" />
 				<div className={classes.body}>
 					<Sidebar setSidebarController={setSidebarController} setTableType={setTableTypeOverated} sidebarButtonsController={sidebarButtonsController} />
 					{
 						sidebarController == 0 &&
-						<div className={classes.toolbarTitle} style={{ display: 'flex', flexDirection: 'column' }} >
+						<div className={classes.toolbarTitle} style={{ display: 'flex', flexDirection: 'column' , width: '100%'}} >
 							<br />
 							<Typography
 								component="h2"

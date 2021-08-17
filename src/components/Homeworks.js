@@ -110,33 +110,34 @@ const Homeworks = props => {
     };
 
 
-    const addNewHomework = async (newHomework) => {
+    const addNewHomework = async (newHomework, examQuestionData, examSolutionData) => {
         console.log("🚀 ~ file: Homeworks.js ~ line 64 ~ homework", newHomework)
-        let query = serverConfig.url + '/homework'
+        let query = serverConfig.url + '/homework/addExam'
         let studentList = getStudentsListByClassId(newHomework.classId)
+        let homeworkDataForExam = new FormData()
 
-        studentList.forEach(s => {
-            console.log("🚀 ~ file: Homeworks.js ~ line 118 ~ addNewHomework ~ s", s)
-            let homeworkData = new FormData()
+        homeworkDataForExam.append('name', newHomework.name)
+        homeworkDataForExam.append('classId', newHomework.classId)
+        homeworkDataForExam.append('isExam', 1)
+        homeworkDataForExam.append('examQuestion', examQuestionData)
+        homeworkDataForExam.append('examSolution', examSolutionData)
+        homeworkDataForExam.append('date', newHomework.date)
+        homeworkDataForExam.append('argsType', newHomework.argsType)
 
-            homeworkData.append('name', newHomework.name)
-            homeworkData.append('classId', newHomework.classId)
-            homeworkData.append('studentId', s.id)
-            homeworkData.append('date', newHomework.date)
-
-            fetch(query, {
-                method: "post",
-                body: homeworkData,
+        fetch(query, {
+            method: 'post',
+            body: homeworkDataForExam,
+        })
+            .then(data => {
+                console.log("🚀 ~ file: Homeworks.js ~ line 129 ~ addNewHomework ~ data", data)
+                initAllHomeworks()
+                window.alert("המטלה הוספה בהצלחה!")
             })
-                .then(data => {
-                    console.log("🚀 ~ file: Homeworks.js ~ line 129 ~ addNewHomework ~ data", data)
-                })
-                .catch(e => {
-                    console.log("🚀 ~ file: HomeworkItem.js ~ line 73 ~ e", e)
-                });
-        });
+            .catch(e => {
+                console.log("🚀 ~ file: HomeworkItem.js ~ line 73 ~ e", e)
+            });
 
-        initAllHomeworks()
+
         setUpdateHomeworkWindowOpen(false)
     };
 
@@ -151,6 +152,7 @@ const Homeworks = props => {
                 tempHomeworkIdToFile[currentId] = newHomework.fileData
             }
         }
+        console.log("🚀 ~ file: Homeworks.js ~ line 181 ~ updateCurrentHomework ~ tempHomeworkList", tempHomeworkList)
 
         setHomeworkIdToFile(tempHomeworkIdToFile)
         setListData(tempHomeworkList)
@@ -164,6 +166,7 @@ const Homeworks = props => {
         })
             .then(response => response.json())
             .then(data => {
+                console.log("🚀 ~ file: Homeworks.js ~ line 169 ~ initAllHomeworks ~ data", data)
                 let tempHomeworkList = []
                 let tempHomeworkIdToFile = {}
                 let homeworksList = JSON.parse(data.homeworks)
@@ -221,7 +224,7 @@ const Homeworks = props => {
                         <TableBody>
                             {
                                 listData
-                                    .filter(row => classIds.includes(row.classId))
+                                    .filter(row => classIds.includes(row.classId) && !row.isExam)
                                     .map((row, index) => (
                                         <TableRow key={index + 'listdata-item'}>
                                             <TableCell className={classes.rowItem} align="right">{studentIdToName[row.studentId]}</TableCell>
@@ -238,7 +241,7 @@ const Homeworks = props => {
                                                             setCurrentRow(row)
                                                             setIsAddNewHomework(false)
                                                         }}
-                                                        style={{ marginRight: 20, height: 20, width: 30, display: isTeacher ? '' : 'none' }}
+                                                        style={{ marginRight: 20, height: 20, width: 35, display: isTeacher ? '' : 'none' }}
                                                     >
                                                         <EditIcon />
                                                     </Fab>
@@ -302,7 +305,14 @@ const Homeworks = props => {
             }
             <UpdateHomeworkWindow
                 open={updateHomeworkWindowOpen}
-                onClose={() => setUpdateHomeworkWindowOpen(false)}
+                onClose={() => {
+                    setUpdateHomeworkWindowOpen(false)
+                    console.log('onClose')
+                }}
+                stayOpened={() => {
+                    setUpdateHomeworkWindowOpen(true)
+                    console.log('stayOpened')
+                }}
 
                 currentHomework={currentRow}
                 updateHomework={updateHomeworkWithoutFile}
@@ -310,6 +320,7 @@ const Homeworks = props => {
                 isAddNewHomework={isAddNewHomework}
                 classIdToName={classIdToName}
                 classIds={classIds}
+                updateCurrentHomework={updateCurrentHomework}
             />
             {
                 isTeacher &&

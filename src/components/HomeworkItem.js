@@ -59,6 +59,9 @@ const HomeworkItem = props => {
         homeworkData.append('grade', homework.grade)
         homeworkData.append('studentId', homework.studentId)
         homeworkData.append('isFileExist', homework.isFileExist)
+        homeworkData.append('argsType', homework.argsType)
+        homeworkData.append('isExam', homework.isExam)
+        homeworkData.append('examId', homework.examId)
 
         fetch(query, {
             method: "put",
@@ -69,17 +72,21 @@ const HomeworkItem = props => {
                 window.alert("הקובץ הועלה בהצלחה!")
 
                 let queryForFile = serverConfig.url + '/homework/getFileByHomeworkId?homeworkId=' + currentHomework.id
+
                 fetch(queryForFile, {
                     method: 'get',
                 })
                     .then(response => response.json())
                     .then(data => {
+                        console.log("🚀 ~ file: HomeworkItem.js ~ line 80 ~ data", data)
                         // setFileContent(data.fileData)
-                        initAllHomeworks()
                     })
                     .catch(err => {
                         console.error("TCL: registerLogic -> err", err)
                     })
+
+                initAllHomeworks()
+
             })
             .catch(e => {
                 console.log("🚀 ~ file: HomeworkItem.js ~ line 73 ~ e", e)
@@ -96,6 +103,9 @@ const HomeworkItem = props => {
         homeworkData.append('status', homework.status)
         homeworkData.append('grade', homework.grade)
         homeworkData.append('studentId', homework.studentId)
+        homeworkData.append('argsType', homework.argsType)
+        homeworkData.append('isExam', homework.isExam)
+        homeworkData.append('examId', homework.examId)
 
         fetch(query, {
             method: "put",
@@ -109,11 +119,6 @@ const HomeworkItem = props => {
             });
 
     };
-
-    // useEffect(() => {
-    //     console.log("🚀 ~ file: HomeworkItem.js ~ line 106 ~ useEffect ~ useEffect")
-
-    // }, [fileContent])
 
     const getFileData = () => {
         let query = serverConfig.url + '/homework/getFileByHomeworkId?homeworkId=' + currentHomework.id
@@ -146,7 +151,6 @@ const HomeworkItem = props => {
             <Button onClick={() => {
                 if (isTeacher) {
                     if (currentHomework.isFileExist) {
-
                         setDisplayFileWindowOpen(true)
                     } else {
                         window.alert('לא הוזן / הוגש קובץ')
@@ -170,10 +174,10 @@ const HomeworkItem = props => {
                 isFileExist={isFileExist}
 
                 currentHomework={currentHomework}
-                setHomeworkIdToFile={setHomeworkIdToFile}
-                homeworkIdToFile={homeworkIdToFile}
                 updateHomework={updateHomework}
                 updateCurrentHomework={updateCurrentHomework}
+                isExamSolution={false}
+                isExamQuestion={false}
             />
             <DisplayFileWindow open={displayFileWindowOpen} onClose={() => setDisplayFileWindowOpen(false)} content={fileContent} />
             <React.Fragment>
@@ -212,6 +216,7 @@ const HomeworkItem = props => {
                                 }
                             }
                         }}
+                        disabled={currentHomework.status === 'לא הוגש'}
                         variant="contained" color="primary">
 
                         בדוק

@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 'bold',
     fontSize: 50,
     fontFamily: 'system-ui',
-    textShadow: '#9e9e9e 3px 3px 3px'
+    textShadow: '#ffffff 3px 3px 3px'
   },
   toolbarSecondary: {
     justifyContent: 'space-between',
