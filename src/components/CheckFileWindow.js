@@ -71,7 +71,7 @@ const CheckFileWindow = (props) => {
                 <Button onClick={() => handleDisplayFileWindowClickOpen()} variant="contained" color="primary" disabled={!isFileReadyForSend}>
                      הצג מטלה
                 </Button>
-                <DisplayFileWindow open={displayFileWindowOpen} onClose={handleDisplayFileWindowClose} content={fileContent} />
+                <DisplayFileWindow open={displayFileWindowOpen} onClose={handleDisplayFileWindowClose} content={fileContent} rtlDisplay={false}/>
             </div>
         </Dialog>
     );

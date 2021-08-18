@@ -86,19 +86,23 @@ const Homeworks = props => {
     const updateHomeworkWithoutFile = async homework => {
         console.log("🚀 ~ file: Homeworks.js ~ line 64 ~ homework", homework)
         let query = serverConfig.url + '/homework/updateWithoutFile/' + homework.id
+        
         let homeworkData = new FormData()
-
         homeworkData.append('name', homework.name)
         homeworkData.append('classId', homework.classId)
         homeworkData.append('status', homework.status)
-        homeworkData.append('grade', homework.grade)
+        homeworkData.append('grade', Number(homework.grade))
         homeworkData.append('studentId', homework.studentId)
+        homeworkData.append('argsType', homework.argsType)
+        homeworkData.append('isExam', homework.isExam)
+        homeworkData.append('examId', homework.examId)
 
         fetch(query, {
             method: "put",
             body: homeworkData,
         })
             .then(data => {
+                console.log("🚀 ~ file: Homeworks.js ~ line 102 ~ data", data)
                 setUpdateHomeworkWindowOpen(false)
                 window.alert("הציון עודכן בהצלחה!")
                 initAllHomeworks()
@@ -181,7 +185,10 @@ const Homeworks = props => {
                         date: element.Date,
                         grade: element.Grade,
                         studentId: element.StudentId,
-                        isFileExist: element.IsFileExist
+                        isFileExist: element.IsFileExist,
+                        argsType: element.ArgsType,
+                        isExam: element.IsExam,
+                        examId: element.ExamId
                     }
 
                     tempHomeworkList.push(parsedElement)
@@ -217,6 +224,7 @@ const Homeworks = props => {
                                 <TableCell className={classes.rowTitle} align="right">ציון</TableCell>
                                 <TableCell className={classes.rowTitle} align="right">תאריך</TableCell>
                                 <TableCell className={classes.rowTitle} align="right">מקצוע</TableCell>
+                                <TableCell className={classes.rowTitle} align="right">סוג קלט</TableCell>
                                 <TableCell className={classes.rowTitle} align="right">מצב הגשה</TableCell>
                                 <TableCell className={classes.rowTitle} align="right">הגשה</TableCell>
                             </TableRow>
@@ -266,8 +274,9 @@ const Homeworks = props => {
                                                     + ' - ' + new Date(row.date).getHours() + ':' + new Date(row.date).getMinutes()}
                                             </TableCell>
                                             <TableCell className={classes.rowItem} align="right">{classIdToName[row.classId]}</TableCell>
+                                            <TableCell className={classes.rowItem} align="right">{row.argsType}</TableCell>
                                             <TableCell className={classes.rowItem} align="right">{row.status}</TableCell>
-                                            <TableCell className={classes.rowItem} align="right" style={{ width: 220 }}>
+                                            <TableCell className={classes.rowItem} align="right" style={{ width: 375 }}>
                                                 <HomeworkItem
                                                     id={row.id}
                                                     isFileExist={homeworkIdToFile[row.id] != null}

@@ -231,7 +231,7 @@ const InsertFileWindow = (props) => {
                 }} variant="contained" color="primary" disabled={!isFileReadyForSend && !currentHomework.isFileExist}>
                     הצג
                 </Button>
-                <DisplayFileWindow open={displayFileWindowOpen} onClose={handleDisplayFileWindowClose} content={fileContent} />
+                <DisplayFileWindow open={displayFileWindowOpen} onClose={handleDisplayFileWindowClose} content={fileContent} rtlDisplay={false} />
             </div>
         </Dialog>
     );

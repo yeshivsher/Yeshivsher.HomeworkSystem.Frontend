@@ -231,7 +231,13 @@ const UpdateHomeworkWindow = (props) => {
                     variant="contained" color="primary"
                     onClick={() => submitFile()}
                     style={{ fontWeight: 'bold', marginTop: 20 }}
-                >צור</Button>
+                >{
+                        isAddNewHomework ?
+                            "צור"
+                            :
+                            "עדכן"
+                    }
+                </Button>
             </div>
             <InsertFileWindow
                 open={insertExamQuestionWindowOpen}

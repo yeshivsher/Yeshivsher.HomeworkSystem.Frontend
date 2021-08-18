@@ -16,7 +16,8 @@ const useStyles = makeStyles({
 
 const DisplayFileWindow = (props) => {
     const classes = useStyles();
-    const { onClose, open, content } = props;
+    const { onClose, open, content, rtlDisplay } = props;
+    console.log("🚀 ~ file: DisplayFileWindow.js ~ line 20 ~ DisplayFileWindow ~ rtlDisplay", rtlDisplay)
 
     const handleClose = () => {
         onClose();
@@ -33,12 +34,12 @@ const DisplayFileWindow = (props) => {
             </DialogTitle>
             <Divider />
             <Typography
-                component="h2"
-                variant="h6"
+                component="h1"
+                variant="body1"
                 color="inherit"
                 align="center"
                 noWrap
-                style={{ padding: 10, whiteSpace: 'normal', overflow: 'auto', textAlign: 'left' }}
+                style={{ padding: 10, whiteSpace: 'normal', overflow: 'auto', textAlign: rtlDisplay ? 'right' : 'left', whiteSpace: 'pre-line', fontWeight: 'bold' }}
             >
                 {content}
             </Typography>

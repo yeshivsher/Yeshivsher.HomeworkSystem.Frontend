@@ -15,7 +15,7 @@ const useStyles = makeStyles({
     root: {
         width: '100%',
         display: 'flex',
-        justifyContent: 'center',
+        justifyContent: 'space-around',
         maxHeight: 400,
         flexDirection: 'column',
         alignItems: 'center',
@@ -45,7 +45,10 @@ const HomeworkItem = props => {
 
     const [insertFileWindowOpen, setInsertFileWindowOpen] = useState(false);
     const [fileContent, setFileContent] = useState(null);
+    const [examQuestionContent, setExamQuestionContent] = useState(null);
     const [displayFileWindowOpen, setDisplayFileWindowOpen] = useState(false);
+    const [displayExamQuestionWindowOpen, setDisplayExamQuestionWindowOpen] = useState(false);
+    const [rtlDisplay, setRtlDisplay] = useState(false);
 
     const updateHomework = async homework => {
         console.log("🚀 ~ file: HomeworkItem.js ~ line 50 ~ homework", homework)
@@ -68,6 +71,7 @@ const HomeworkItem = props => {
             body: homeworkData,
         })
             .then(data => {
+                console.log("🚀 ~ file: HomeworkItem.js ~ line 71 ~ data", data)
                 setInsertFileWindowOpen(false)
                 window.alert("הקובץ הועלה בהצלחה!")
 
@@ -86,7 +90,6 @@ const HomeworkItem = props => {
                     })
 
                 initAllHomeworks()
-
             })
             .catch(e => {
                 console.log("🚀 ~ file: HomeworkItem.js ~ line 73 ~ e", e)
@@ -101,12 +104,13 @@ const HomeworkItem = props => {
         homeworkData.append('name', homework.name)
         homeworkData.append('classId', homework.classId)
         homeworkData.append('status', homework.status)
-        homeworkData.append('grade', homework.grade)
+        homeworkData.append('grade', Number(homework.grade))
         homeworkData.append('studentId', homework.studentId)
         homeworkData.append('argsType', homework.argsType)
         homeworkData.append('isExam', homework.isExam)
         homeworkData.append('examId', homework.examId)
 
+        console.log("🚀 ~ file: HomeworkItem.js ~ line 117 ~ homeworkData", homeworkData)
         fetch(query, {
             method: "put",
             body: homeworkData,
@@ -134,9 +138,27 @@ const HomeworkItem = props => {
             })
     }
 
+    const getExamQuestionByHomeworkId = () => {
+        let query = serverConfig.url + '/homework/getExamQuestionByHomeworkId?homeworkId=' + currentHomework.examId
+        fetch(query, {
+            method: 'get',
+        })
+            .then(response => response.json())
+            .then(data => {
+                setExamQuestionContent(data.fileData)
+            })
+            .catch(err => {
+                console.error("TCL: registerLogic -> err", err)
+            })
+    }
+
     useEffect(() => {
         if (currentHomework.isFileExist) {
             getFileData()
+        }
+
+        if (examQuestionContent == null) {
+            getExamQuestionByHomeworkId()
         }
     }, [])
 
@@ -144,11 +166,16 @@ const HomeworkItem = props => {
         if (currentHomework.isFileExist) {
             getFileData()
         }
+
+        if (examQuestionContent == null) {
+            getExamQuestionByHomeworkId()
+        }
     }, [fileContent])
 
     return (
         <div className={classes.root}>
             <Button onClick={() => {
+                setRtlDisplay(false)
                 if (isTeacher) {
                     if (currentHomework.isFileExist) {
                         setDisplayFileWindowOpen(true)
@@ -167,9 +194,29 @@ const HomeworkItem = props => {
                         "קובץ מטלה"
                 }
             </Button>
+            <Button
+                onClick={() => {
+                    console.log("🚀 ~ file: HomeworkItem.js ~ line 194 ~ examQuestionContent", examQuestionContent)
+                    if (examQuestionContent != null) {
+                        setDisplayExamQuestionWindowOpen(true)
+                        setRtlDisplay(true)
+                    }
+                }}
+                variant="contained"
+                color="primary">
+                {
+                    isTeacher ?
+                        "הצג תרגיל"
+                        :
+                        "קובץ תרגיל"
+                }
+            </Button>
             <InsertFileWindow
                 open={insertFileWindowOpen}
-                onClose={() => setInsertFileWindowOpen(false)}
+                onClose={() => {
+                    setRtlDisplay(false)
+                    setInsertFileWindowOpen(false)
+                }}
                 id={id}
                 isFileExist={isFileExist}
 
@@ -179,42 +226,26 @@ const HomeworkItem = props => {
                 isExamSolution={false}
                 isExamQuestion={false}
             />
-            <DisplayFileWindow open={displayFileWindowOpen} onClose={() => setDisplayFileWindowOpen(false)} content={fileContent} />
+            <DisplayFileWindow open={displayFileWindowOpen} onClose={() => setDisplayFileWindowOpen(false)} content={fileContent} rtlDisplay={rtlDisplay} />
+            <DisplayFileWindow open={displayExamQuestionWindowOpen} onClose={() => setDisplayExamQuestionWindowOpen(false)} content={examQuestionContent} rtlDisplay={rtlDisplay} />
             <React.Fragment>
                 {
                     !isTeacher &&
                     <Button
                         style={{ marginRight: 10 }}
                         onClick={() => {
-                            console.log("🚀 ~ file: HomeworkItem.js ~ line 176 ~ fileContent", fileContent)
-                            if (!fileContent) {
-                                let query = serverConfig.url + '/homework/getFileByHomeworkId?homeworkId=' + currentHomework.id
-                                fetch(query, {
-                                    method: 'get',
+                            let query = serverConfig.url + '/homework/pythonCodeCheckerByHomeworkId?homeworkId=' + currentHomework.id
+
+                            fetch(query, {
+                                method: 'get',
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    updateHomeworkWithoutFile({ ...currentHomework, grade: data.grade })
                                 })
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        setFileContent(data.fileData)
-                                        if (data.fileData?.length < 100) {
-                                            window.alert('ציונך הוא: 100')
-                                            updateHomeworkWithoutFile({ ...currentHomework, grade: 100 })
-                                        } else {
-                                            window.alert('הבדיקה נכשלה.\nציונך הוא: 0.')
-                                            updateHomeworkWithoutFile({ ...currentHomework, grade: 0 })
-                                        }
-                                    })
-                                    .catch(err => {
-                                        console.error("TCL: registerLogic -> err", err)
-                                    })
-                            } else {
-                                if (fileContent?.length < 100) {
-                                    window.alert('ציונך הוא: 100')
-                                    updateHomeworkWithoutFile({ ...currentHomework, grade: 100 })
-                                } else {
-                                    window.alert('הבדיקה נכשלה.\nציונך הוא: 0.')
-                                    updateHomeworkWithoutFile({ ...currentHomework, grade: 0 })
-                                }
-                            }
+                                .catch(err => {
+                                    console.error("TCL: registerLogic -> err", err)
+                                })
                         }}
                         disabled={currentHomework.status === 'לא הוגש'}
                         variant="contained" color="primary">
