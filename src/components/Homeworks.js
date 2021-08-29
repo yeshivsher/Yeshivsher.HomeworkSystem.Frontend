@@ -15,6 +15,9 @@ import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import EditIcon from '@material-ui/icons/Edit';
 import AddIcon from '@material-ui/icons/Add';
+import SearchIcon from '@material-ui/icons/Search';
+import InputBase from '@material-ui/core/InputBase';
+import Button from '@material-ui/core/Button';
 
 import { getBase64 } from './general/helperFunctions';
 import { serverConfig } from '../config';
@@ -70,23 +73,61 @@ const useStyles = makeStyles({
         bottom: 60,
         right: 60,
     },
+    searchContainer: {
+        width: '97%',
+        display: 'flex',
+        justifyContent: 'space-between'
+    },
+    search: {
+        position: 'relative',
+        borderRadius: 5,
+        backgroundColor: "#869bb4",
+        '&:hover': {
+            // backgroundColor: "blue",
+        },
+        marginLeft: 0,
+        width: '93%',
+        marginBottom: 10
+    },
+    searchIcon: {
+        padding: 10,
+        height: '100%',
+        position: 'absolute',
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    inputRoot: {
+        color: 'white',
+        width: '100%',
+        marginRight: 40
+    },
+    inputInput: {
+        padding: 10,
+        paddingLeft: 50,
+        transition: 'width 2s',
+        width: '100%',
+    },
 });
 
 const Homeworks = props => {
     const classes = useStyles();
     const { classIdToName, isTeacher, userId, classIds, getStudentsListByClassId, studentIdToName } = props
     const [listData, setListData] = useState([]);
+    const [filteredListData, setFilteredListData] = useState(null);
     const [homeworkIdToFile, setHomeworkIdToFile] = useState({});
     const [homeworkIdToFileUpload, setHomeworkIdToFileUpload] = useState({});
     const [loaded, setLoaded] = useState(false)
     const [updateHomeworkWindowOpen, setUpdateHomeworkWindowOpen] = useState(false);
     const [currentRow, setCurrentRow] = useState(false);
     const [isAddNewHomework, setIsAddNewHomework] = useState(false);
+    const [homeworkSearchWord, setHomeworkSearchWord] = useState('');
 
     const updateHomeworkWithoutFile = async homework => {
         console.log("🚀 ~ file: Homeworks.js ~ line 64 ~ homework", homework)
         let query = serverConfig.url + '/homework/updateWithoutFile/' + homework.id
-        
+
         let homeworkData = new FormData()
         homeworkData.append('name', homework.name)
         homeworkData.append('classId', homework.classId)
@@ -176,33 +217,54 @@ const Homeworks = props => {
                 let homeworksList = JSON.parse(data.homeworks)
 
                 homeworksList.forEach(element => {
-                    let parsedElement = {
-                        id: element.Id,
-                        fileData: element.FileData,
-                        name: element.Name,
-                        classId: element.ClassId,
-                        status: element.Status,
-                        date: element.Date,
-                        grade: element.Grade,
-                        studentId: element.StudentId,
-                        isFileExist: element.IsFileExist,
-                        argsType: element.ArgsType,
-                        isExam: element.IsExam,
-                        examId: element.ExamId
-                    }
+                    if (!element.IsExam) {
+                        let parsedElement = {
+                            id: element.Id,
+                            fileData: element.FileData,
+                            name: element.Name,
+                            classId: element.ClassId,
+                            status: element.Status,
+                            date: element.Date,
+                            grade: element.Grade,
+                            studentId: element.StudentId,
+                            isFileExist: element.IsFileExist,
+                            argsType: element.ArgsType,
+                            isExam: element.IsExam,
+                            examId: element.ExamId
+                        }
 
-                    tempHomeworkList.push(parsedElement)
-                    tempHomeworkIdToFile[parsedElement.id] = parsedElement.fileData
+                        tempHomeworkList.push(parsedElement)
+                        tempHomeworkIdToFile[parsedElement.id] = parsedElement.fileData
+                    }
                 });
                 console.log("🚀 ~ file: Homeworks.js ~ line 116 ~ initAllHomeworks ~ homeworksList", homeworksList)
 
                 setHomeworkIdToFile(tempHomeworkIdToFile)
                 setListData(tempHomeworkList)
                 setLoaded(!(tempHomeworkList.length > 0))
+                setFilteredListData(tempHomeworkList)
             })
             .catch(err => {
                 console.error("TCL: registerLogic -> err", err)
             })
+    }
+
+    const handleHomeworkSearchChange = () => {
+        let filteredList = []
+        filteredList = listData.filter(homework =>
+            homework.name.includes(homeworkSearchWord))
+        console.log("🚀 ~ file: Homeworks.js ~ line 246 ~ handleHomeworkSearchChange ~ filteredList", filteredList)
+
+        setFilteredListData([...filteredList])
+    }
+
+    const handleStudentSearchClick = (id) => {
+        let filteredList = []
+        filteredList = listData.filter(homework =>
+            homework.studentId === id)
+        console.log("🚀 ~ file: Homeworks.js ~ line 246 ~ handleHomeworkSearchChange ~ filteredList", filteredList)
+
+        setFilteredListData([...filteredList])
     }
 
     useEffect(function () {
@@ -212,88 +274,139 @@ const Homeworks = props => {
         initAllHomeworks()
     }, [])
 
+    useEffect(function () {
+        console.log('useEffect filteredListData')
+    }, [filteredListData])
+
     return (
         <div className={classes.root}>
-            {listData.length > 0 ?
-                <TableContainer component={Paper} className={classes.rootTable}>
-                    <Table className={classes.table} aria-label="simple table">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell className={classes.rowTitle} align="right">שם סטודנט</TableCell>
-                                <TableCell className={classes.rowTitle}>שם מטלה</TableCell>
-                                <TableCell className={classes.rowTitle} align="right">ציון</TableCell>
-                                <TableCell className={classes.rowTitle} align="right">תאריך</TableCell>
-                                <TableCell className={classes.rowTitle} align="right">מקצוע</TableCell>
-                                <TableCell className={classes.rowTitle} align="right">סוג קלט</TableCell>
-                                <TableCell className={classes.rowTitle} align="right">מצב הגשה</TableCell>
-                                <TableCell className={classes.rowTitle} align="right">הגשה</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {
-                                listData
-                                    .filter(row => classIds.includes(row.classId) && !row.isExam)
-                                    .map((row, index) => (
-                                        <TableRow key={index + 'listdata-item'}>
-                                            <TableCell className={classes.rowItem} align="right">{studentIdToName[row.studentId]}</TableCell>
-                                            <TableCell className={classes.rowItem} component="th" scope="row">
-                                                {row.name}
-                                            </TableCell>
-                                            <TableCell className={classes.rowItem} style={{ width: 50 }}>
-                                                <div style={{ alignItems: 'center', display: 'flex', paddingRight: 30 }}>
-                                                    <Fab
-                                                        color="primary"
-                                                        aria-label="edit"
-                                                        onClick={() => {
-                                                            setUpdateHomeworkWindowOpen(true)
-                                                            setCurrentRow(row)
-                                                            setIsAddNewHomework(false)
-                                                        }}
-                                                        style={{ marginRight: 20, height: 20, width: 35, display: isTeacher ? '' : 'none' }}
-                                                    >
-                                                        <EditIcon />
-                                                    </Fab>
-                                                    <Typography
-                                                        component="h2"
-                                                        color="inherit"
-                                                        align="center"
-                                                        noWrap
-                                                        style={{
-                                                            fontSize: 14,
-                                                            fontWeight: 'bold',
-                                                            marginRight: 20,
-                                                            color: row.grade == null ? 'gray' : row.grade > 59 ? 'green' : 'red'
-                                                        }}
-                                                    >
-                                                        {row.grade == null ? 'אין ציון' : row.grade}
-                                                    </Typography>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className={classes.rowItem} align="right" style={{ width: 200 }}>
-                                                {new Date(row.date).getFullYear() + '/' + (new Date(row.date).getMonth() + 1) + '/' + new Date(row.date).getDate()
-                                                    + ' - ' + new Date(row.date).getHours() + ':' + new Date(row.date).getMinutes()}
-                                            </TableCell>
-                                            <TableCell className={classes.rowItem} align="right">{classIdToName[row.classId]}</TableCell>
-                                            <TableCell className={classes.rowItem} align="right">{row.argsType}</TableCell>
-                                            <TableCell className={classes.rowItem} align="right">{row.status}</TableCell>
-                                            <TableCell className={classes.rowItem} align="right" style={{ width: 375 }}>
-                                                <HomeworkItem
-                                                    id={row.id}
-                                                    isFileExist={homeworkIdToFile[row.id] != null}
-                                                    setHomeworkIdToFile={setHomeworkIdToFile}
-                                                    homeworkIdToFile={homeworkIdToFile}
-                                                    setHomeworkIdToFileUpload={setHomeworkIdToFileUpload}
-                                                    isTeacher={isTeacher}
-                                                    currentHomework={row}
-                                                    initAllHomeworks={initAllHomeworks}
-                                                    updateCurrentHomework={updateCurrentHomework}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+            <div className={classes.searchContainer}>
+                <div className={classes.search}>
+                    <div className={classes.searchIcon}>
+                        <SearchIcon />
+                    </div>
+                    <InputBase
+                        onChange={(e) => {
+                            setHomeworkSearchWord(e.target.value)
+                        }}
+                        placeholder="חיפוש מטלה…"
+                        classes={{
+                            root: classes.inputRoot,
+                            input: classes.inputInput,
+                        }}
+                        inputProps={{ 'aria-label': 'search' }}
+                    />
+                </div>
+                <Button
+                    style={{ height: 38, background: '#4864ff', color: 'white' }}
+                    onClick={handleHomeworkSearchChange}
+                    variant="contained"
+                    color="primary"
+                >
+                    חפש
+                </Button>
+            </div>
+            {Array.isArray(filteredListData) && filteredListData.length > 0 ?
+                <>
+                    <p>{"מספר תוצאות: " + filteredListData.length}</p>
+                    <TableContainer component={Paper} className={classes.rootTable}>
+                        <Table className={classes.table} aria-label="simple table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell className={classes.rowTitle} align="right"
+                                        style={{
+                                            cursor: 'pointer',
+                                            textShadow: '0px 0px 12px rgb(0 0 0)',
+                                            width: 150
+                                        }}
+                                        onClick={(e) => {
+                                            setFilteredListData(listData)
+                                        }}
+                                    >שם סטודנט</TableCell>
+                                    <TableCell className={classes.rowTitle} >שם מטלה</TableCell>
+                                    <TableCell className={classes.rowTitle} align="right">ציון</TableCell>
+                                    <TableCell className={classes.rowTitle} align="right">תאריך</TableCell>
+                                    <TableCell className={classes.rowTitle} align="right">מקצוע</TableCell>
+                                    <TableCell className={classes.rowTitle} align="right">סוג קלט</TableCell>
+                                    <TableCell className={classes.rowTitle} align="right">מצב הגשה</TableCell>
+                                    <TableCell className={classes.rowTitle} align="right">הגשה</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {
+                                    filteredListData
+                                        .filter(row => classIds.includes(row.classId) && !row.isExam)
+                                        .map((row, index) => (
+                                            <TableRow key={index + 'listdata-item'}>
+                                                <TableCell
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        textShadow: '0px 0px 12px #3f51b5',
+                                                        width: 170
+                                                    }}
+                                                    onClick={(e) => {
+                                                        handleStudentSearchClick(row.studentId)
+                                                    }}
+                                                    className={classes.rowItem} align="right">{studentIdToName[row.studentId]}</TableCell>
+                                                <TableCell style={{ width: 120 }} className={classes.rowItem} component="th" scope="row">
+                                                    {row.name}
+                                                </TableCell>
+                                                <TableCell className={classes.rowItem} style={{ width: 50 }}>
+                                                    <div style={{ alignItems: 'center', display: 'flex', paddingRight: 30 }}>
+                                                        <Fab
+                                                            color="primary"
+                                                            aria-label="edit"
+                                                            onClick={() => {
+                                                                setUpdateHomeworkWindowOpen(true)
+                                                                setCurrentRow(row)
+                                                                setIsAddNewHomework(false)
+                                                            }}
+                                                            style={{ height: 20, width: 35, display: isTeacher ? '' : 'none' }}
+                                                        >
+                                                            <EditIcon />
+                                                        </Fab>
+                                                        <Typography
+                                                            component="h2"
+                                                            color="inherit"
+                                                            align="center"
+                                                            noWrap
+                                                            style={{
+                                                                fontSize: 14,
+                                                                fontWeight: 'bold',
+                                                                marginRight: 20,
+                                                                color: row.grade == null ? 'gray' : row.grade > 59 ? 'green' : 'red'
+                                                            }}
+                                                        >
+                                                            {row.grade == null ? 'אין ציון' : row.grade}
+                                                        </Typography>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className={classes.rowItem} align="right" style={{ width: 200 }}>
+                                                    {new Date(row.date).getFullYear() + '/' + (new Date(row.date).getMonth() + 1) + '/' + new Date(row.date).getDate()
+                                                        + ' - ' + new Date(row.date).getHours() + ':' + new Date(row.date).getMinutes()}
+                                                </TableCell>
+                                                <TableCell className={classes.rowItem} style={{ width: 120 }} align="right">{classIdToName[row.classId]}</TableCell>
+                                                <TableCell className={classes.rowItem} align="right">{row.argsType}</TableCell>
+                                                <TableCell className={classes.rowItem} align="right">{row.status}</TableCell>
+                                                <TableCell className={classes.rowItem} align="right" style={{ width: 375 }}>
+                                                    <HomeworkItem
+                                                        id={row.id}
+                                                        isFileExist={homeworkIdToFile[row.id] != null}
+                                                        setHomeworkIdToFile={setHomeworkIdToFile}
+                                                        homeworkIdToFile={homeworkIdToFile}
+                                                        setHomeworkIdToFileUpload={setHomeworkIdToFileUpload}
+                                                        isTeacher={isTeacher}
+                                                        currentHomework={row}
+                                                        initAllHomeworks={initAllHomeworks}
+                                                        updateCurrentHomework={updateCurrentHomework}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </>
                 :
                 <div>
                     {

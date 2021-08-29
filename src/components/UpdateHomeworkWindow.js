@@ -43,7 +43,7 @@ const useStyles = makeStyles({
     }
 });
 
-const ARGS_TYPE_LIST = ["INT", "FLOAT", "STRING"]
+const ARGS_TYPE_LIST = ["INT", "FLOAT", "STRING", "LIST_INT", "LIST_FLOAT", "LIST_STRING", "DIC_INT", "DIC_FLOAT", "DIC_STRING"]
 
 const UpdateHomeworkWindow = (props) => {
     const classes = useStyles();
@@ -95,6 +95,8 @@ const UpdateHomeworkWindow = (props) => {
     };
 
     useEffect(() => {
+        console.log("🚀 ~ file: UpdateHomeworkWindow.js ~ line 100 ~ useEffect ~ classIds", classIds)
+        console.log("🚀 ~ file: UpdateHomeworkWindow.js ~ line 100 ~ useEffect ~ classIds", classIdToName)
     }, [])
 
     return (

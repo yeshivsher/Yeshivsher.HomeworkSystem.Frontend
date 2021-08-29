@@ -17,7 +17,7 @@ const useStyles = makeStyles({
 const DisplayFileWindow = (props) => {
     const classes = useStyles();
     const { onClose, open, content, rtlDisplay } = props;
-    console.log("🚀 ~ file: DisplayFileWindow.js ~ line 20 ~ DisplayFileWindow ~ rtlDisplay", rtlDisplay)
+    console.log("🚀 ~ file: DisplayFileWindow.js ~ line 20 ~ DisplayFileWindow ~ rtlDisplay")
 
     const handleClose = () => {
         onClose();
@@ -26,6 +26,10 @@ const DisplayFileWindow = (props) => {
     const handleListItemClick = () => {
         onClose();
     };
+
+    React.useEffect(function () {
+        console.log('useEffect DisplayFileWindow')
+    }, [])
 
     return (
         <Dialog onClose={handleClose} aria-labelledby="dialog-title" open={open}>

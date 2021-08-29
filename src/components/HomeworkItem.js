@@ -157,20 +157,18 @@ const HomeworkItem = props => {
             getFileData()
         }
 
-        if (examQuestionContent == null) {
-            getExamQuestionByHomeworkId()
-        }
+        getExamQuestionByHomeworkId()
     }, [])
 
     useEffect(() => {
         if (currentHomework.isFileExist) {
             getFileData()
         }
-
-        if (examQuestionContent == null) {
-            getExamQuestionByHomeworkId()
-        }
     }, [fileContent])
+
+    useEffect(() => {
+        getExamQuestionByHomeworkId()
+    }, [examQuestionContent])
 
     return (
         <div className={classes.root}>
@@ -226,8 +224,14 @@ const HomeworkItem = props => {
                 isExamSolution={false}
                 isExamQuestion={false}
             />
-            <DisplayFileWindow open={displayFileWindowOpen} onClose={() => setDisplayFileWindowOpen(false)} content={fileContent} rtlDisplay={rtlDisplay} />
-            <DisplayFileWindow open={displayExamQuestionWindowOpen} onClose={() => setDisplayExamQuestionWindowOpen(false)} content={examQuestionContent} rtlDisplay={rtlDisplay} />
+            {
+                displayFileWindowOpen &&
+                <DisplayFileWindow open={displayFileWindowOpen} onClose={() => setDisplayFileWindowOpen(false)} content={fileContent} rtlDisplay={rtlDisplay} />
+            }
+            {
+                displayExamQuestionWindowOpen &&
+                <DisplayFileWindow open={displayExamQuestionWindowOpen} onClose={() => setDisplayExamQuestionWindowOpen(false)} content={examQuestionContent} rtlDisplay={rtlDisplay} />
+            }
             <React.Fragment>
                 {
                     !isTeacher &&
@@ -241,7 +245,27 @@ const HomeworkItem = props => {
                             })
                                 .then(response => response.json())
                                 .then(data => {
-                                    updateHomeworkWithoutFile({ ...currentHomework, grade: data.grade })
+                                    console.log("🚀 ~ file: HomeworkItem.js ~ line 244 ~ data", data)
+                                    if(data.data.succeed){
+                                        let solutionDic = data.data.solutionDic
+                                        console.log("🚀 ~ file: HomeworkItem.js ~ line 246 ~ solutionDic", solutionDic)
+                                        let studentSolutionDic = data.data.studentSolutionDic
+    
+                                        let alertContent = '\n'
+    
+                                        for (let s in solutionDic) {
+                                            alertContent = alertContent.concat(' לארגומנט  ' + s + ' -- ' + ' התשובה:  ' + solutionDic[s]
+                                                + ', ' + 'תשובתך: ' + studentSolutionDic[s]
+                                                + '\n')
+    
+                                        }
+                                        console.log("🚀 ~ file: HomeworkItem.js ~ line 253 ~ alertContent", alertContent)
+    
+                                        alert(alertContent)
+                                    }else{
+                                        alert("הקובץ מכיל באגים - ציונך 0.")
+                                    }
+                                    updateHomeworkWithoutFile({ ...currentHomework, grade: data.data.grade })
                                 })
                                 .catch(err => {
                                     console.error("TCL: registerLogic -> err", err)

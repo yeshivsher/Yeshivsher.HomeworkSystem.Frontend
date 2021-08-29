@@ -11,6 +11,8 @@ import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import mainImage from '../images/main.jpg';
 import mainTeacher from '../images/mainTeacher.jpg';
+import AddClassWindow from './AddClassWindow';
+import Button from '@material-ui/core/Button';
 
 const TEACHER = 'teacher'
 const STUDENT = 'student'
@@ -46,6 +48,7 @@ export default function Home() {
 	const [userId, setUserId] = useState('');
 	const [username, setUsername] = useState('');
 	const [classIds, setClassIds] = useState([]);
+	const [addClassWindowOpen, setAddClassWindowOpen] = useState(false);
 
 	const [sidebarController, setSidebarController] = useState(0);
 	const [sidebarButtonsController, setSidebarButtonsController] = useState([]);
@@ -80,6 +83,29 @@ export default function Home() {
 			let list = JSON.parse(s.classIds)
 			return !!list.includes(classId)
 		})
+	}
+
+	const initAllClasses = () => {
+		let queryC = serverConfig.url + '/classes'
+		fetch(queryC, {
+			method: 'get',
+		})
+			.then(response => response.json())
+			.then(data => {
+				console.log("🚀 ~ file: Home.js ~ line 95 ~ initAllClasses ~ data", data)
+				let tempClassIdToName = {}
+
+				data.classes.forEach(element => {
+					let parsedElement = JSON.parse(element)
+					tempClassIdToName[parsedElement.id] = parsedElement.className
+				});
+				console.log("🚀 ~ file: Home.js ~ line 101 ~ initAllClasses ~ tempClassIdToName", tempClassIdToName)
+
+				setClassIdToName({ ...tempClassIdToName })
+			})
+			.catch(err => {
+				console.error("TCL: registerLogic -> err", err)
+			})
 	}
 
 	useEffect(function () {
@@ -155,25 +181,10 @@ export default function Home() {
 				console.error("TCL: registerLogic -> err", err)
 			})
 
-		let queryC = serverConfig.url + '/classes'
-		fetch(queryC, {
-			method: 'get',
-		})
-			.then(response => response.json())
-			.then(data => {
-				let tempClassIdToName = {}
-
-				data.classes.forEach(element => {
-					let parsedElement = JSON.parse(element)
-					tempClassIdToName[parsedElement.id] = parsedElement.className
-				});
-
-				setClassIdToName(tempClassIdToName)
-			})
-			.catch(err => {
-				console.error("TCL: registerLogic -> err", err)
-			})
+		initAllClasses()
 	}, [])
+
+
 	useEffect(function () {
 		console.log('useEffect 2 ')
 
@@ -196,7 +207,7 @@ export default function Home() {
 					<Sidebar setSidebarController={setSidebarController} setTableType={setTableTypeOverated} sidebarButtonsController={sidebarButtonsController} />
 					{
 						sidebarController == 0 &&
-						<div className={classes.toolbarTitle} style={{ display: 'flex', flexDirection: 'column' , width: '100%'}} >
+						<div className={classes.toolbarTitle} style={{ display: 'flex', flexDirection: 'column', width: '100%' }} >
 							<br />
 							<Typography
 								component="h2"
@@ -246,6 +257,12 @@ export default function Home() {
 								}
 							</React.Fragment>
 							<br />
+							{
+								isTeacher &&
+								<Button onClick={() => setAddClassWindowOpen(true)} variant="contained" color="primary" style={{ alignSelf: 'center', width: 120 }}>
+									הוספת קורס
+								</Button>
+							}
 							<br />
 						</div>
 					}
@@ -262,6 +279,25 @@ export default function Home() {
 							classIds={classIds}
 							getStudentsListByClassId={getStudentsListByClassId}
 							studentIdToName={studentIdToName}
+						/>
+					}
+					{addClassWindowOpen &&
+						<AddClassWindow
+							open={addClassWindowOpen}
+							onClose={() => {
+								setAddClassWindowOpen(false)
+								console.log('onClose')
+							}}
+							stayOpened={() => {
+								setAddClassWindowOpen(true)
+								console.log('stayOpened')
+							}}
+
+							classIdToName={classIdToName}
+							classIds={classIds}
+							teacherId={userId}
+							initAllClasses={initAllClasses}
+							setClassIds={setClassIds}
 						/>
 					}
 				</div>
